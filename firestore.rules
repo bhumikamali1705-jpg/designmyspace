@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (Firebase Auth UID)
+    // Fields:
+    //   - uid: string (required) - User's unique ID
+    //   - email: string (required) - User's email
+    //   - displayName: string (optional) - User's name
+    //   - designsUsed: number (required) - Count of generated designs
+    //   - plan: string (required, enum: ['free', 'pro']) - Subscription plan
+    //   - createdAt: timestamp (optional) - When the user joined
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'designsUsed', 'plan']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.designsUsed is number &&
+             data.plan in ['free', 'basic', 'starter', 'pro', 'elite'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      
+      allow create: if isOwner(userId) && 
+                      isValidUser(request.resource.data) &&
+                      request.resource.data.designsUsed == 0 &&
+                      request.resource.data.plan == 'free';
+      
+      allow update: if isOwner(userId) && 
+                      isValidUser(request.resource.data) &&
+                      request.resource.data.uid == resource.data.uid &&
+                      request.resource.data.email == resource.data.email;
+
+      match /designs/{designId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

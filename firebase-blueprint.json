@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and subscription data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "designsUsed": { "type": "integer", "description": "Number of designs generated" },
+        "plan": { "type": "string", "enum": ["free", "basic", "starter", "pro", "elite"], "description": "Subscription plan" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation date" }
+      },
+      "required": ["uid", "email", "designsUsed", "plan"]
+    },
+    "Design": {
+      "title": "Design",
+      "description": "A generated interior design",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID" },
+        "title": { "type": "string", "description": "Design title" },
+        "image": { "type": "string", "description": "Base64 or URL of the generated image" },
+        "originalImage": { "type": "string", "description": "Base64 or URL of the original image" },
+        "style": { "type": "string", "description": "Design style" },
+        "roomType": { "type": "string", "description": "Room type" },
+        "mood": { "type": "string", "description": "Design mood" },
+        "concept": { "type": "string", "description": "AI generated concept text" },
+        "furniture": { "type": "array", "items": { "type": "string" }, "description": "List of furniture items" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation date" }
+      },
+      "required": ["id", "title", "image", "style", "roomType", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User documents stored by their unique UID"
+    },
+    "/users/{userId}/designs/{designId}": {
+      "schema": "Design",
+      "description": "Saved designs for a specific user"
+    }
+  }
+}
